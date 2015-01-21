@@ -39,4 +39,46 @@ call lua script from Matlab/GNU Octave
     all done, lua stack top 0
     ret =     5.85987448204884
 
-You can easily use it for [sumdata](https://github.com/markuman/sumdata). This will bring the speed of lua _(<4 sec)_ into GNU Octave _(> 120 sec)_ and Matlab e.g. without touching C/C++.
+
+### BENCHMARKING
+
+You can easily use it for [sumdata](https://github.com/markuman/sumdata). This will bring the speed of lua _(< 5 sec)_ into GNU Octave _(> 180 sec)_ and Matlab e.g. without touching C/C++.
+
+#### octave benchmark
+
+    octave:1> tic, sumdata, toc
+    Original size 117261679.920000kb
+    Compressed size 96727557.137000kb
+    Elapsed time is 182.445 seconds.
+
+#### mex-lua benchmark
+
+    function sumdata(file)
+      local o, ot, c, ct, l = 0, 0, 0, 0, 1
+
+      for line in io.lines(file) do
+        for n in string.gmatch(line, "%S+") do
+          if l == 5 then
+            ot = n
+          elseif l == 6 then
+            ct = n
+            break
+          end
+          l = l + 1
+        end
+        l, o, c = 1, o + ot, c + ct
+      end
+      return (string.format("Original Size: %.0f kb\nCompressed Size: %.0f kb\n",o/1000,c/1000))
+    end
+
+    octave:2> tic, ret = lua('sumdata', 'data.log'), toc
+    well done sumdata in sumdata.lua
+    lua stack top 1
+    0 is string, lua stack top 1
+    all done, lua stack top 0
+    ret = Original Size: 117261680 kb
+    Compressed Size: 96727557 kb
+
+    Elapsed time is 4.61084 seconds.
+
+
