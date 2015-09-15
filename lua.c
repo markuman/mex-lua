@@ -22,21 +22,16 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
-// mac os x
-/*
-#include "/usr/local/include/lua.h"
-#include "/usr/local/include/lualib.h"
-#include "/usr/local/include/lauxlib.h"
-*/
-
-// Matlab specific includes
+// Matlab/GNU Octave specific includes
 #include "mex.h"
+
+// define column major order
+#define CMO(c, r, rows) ( (c - 1) * rows + (r - 1) + 1)
 
 //#define DEBUG
 
 int top;
 mxArray *cell_array_ptr;
-
 
 void mexFunction (int nlhs, mxArray *plhs[],
                   int nrhs, const mxArray *prhs[])
@@ -110,14 +105,13 @@ void mexFunction (int nlhs, mxArray *plhs[],
                 
                 for (int c = 1; c <= columns; ++c) {
                     lua_rawgeti(L, -1, c);
-                    // column major order
                     #ifdef DEBUG                    
-                    printf("index %d, row %d, col %d, nbrows %d\n", ( (c - 1) * rows + (r - 1) + 1), r, c, rows); 
+                    printf("index %d, row %d, col %d, nbrows %d\n", CMO(c , r, rows), r, c, rows); 
                     #endif
                     if (lua_isnumber(L, -1)) {
-                        mxSetCell(cell_array_ptr,( (c - 1) * rows + (r - 1) + 1) - 1, mxCreateDoubleScalar(lua_tonumber(L, -1)));
+                        mxSetCell(cell_array_ptr, CMO(c, r, rows) - 1, mxCreateDoubleScalar(lua_tonumber(L, -1)));
                     } else {
-                        mxSetCell(cell_array_ptr,( (c - 1) * rows + (r - 1) + 1) - 1, mxCreateString(lua_tostring(L, -1)));
+                        mxSetCell(cell_array_ptr, CMO(c, r, rows) - 1, mxCreateString(lua_tostring(L, -1)));
                     }
                     lua_pop(L, 1);
                     ++elements;
